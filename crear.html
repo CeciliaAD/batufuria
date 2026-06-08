@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Nueva Encuesta</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+    <nav class="bg-indigo-600 text-white p-4 shadow-md">
+        <div class="container mx-auto">
+            <a href="index.html" class="text-sm font-medium hover:underline">← Volver al inicio</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 max-w-md mt-10">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-2xl font-bold mb-6 text-indigo-900 text-center">Nueva Encuesta</h2>
+            
+            <form id="form-crear">
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold mb-2">Título de la encuesta</label>
+                    <input type="text" id="titulo" placeholder="Ej: Próximo Bolo Sábado" required 
+                           class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold mb-2">Pregunta</label>
+                    <input type="text" id="pregunta" placeholder="Ej: ¿Quién viene a tocar?" required 
+                           class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2">Opciones (separadas por comas)</label>
+                    <input type="text" id="opciones" placeholder="Ej: Sí voy, No puedo, Dudoso" required 
+                           class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-gray-400 mt-1">Escribe las respuestas posibles separándolas con comas.</p>
+                </div>
+
+                <button type="submit" id="btn-enviar"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition shadow">
+                    Publicar Encuesta
+                </button>
+            </form>
+            
+            <div id="mensaje-exito" class="mt-4 p-3 bg-green-100 text-green-700 rounded-lg text-center font-medium hidden">
+                ¡Encuesta creada con éxito! Redirigiendo...
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
