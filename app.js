@@ -1,28 +1,19 @@
-// CONFIGURACIÓN: Reemplaza esto con la URL que te dio Google Apps Script al implementar
-const API_URL = "https://script.google.com/macros/s/AKfycbxCeo3wB_nE1lwk7uQms-XJuTcQrknuN7fENiIYJw0GTHbK6JFUD_ViM9srirSK9VUF/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxoHs5DOsiny-80Jynradx68gQzhBqTTXUZKsEBeaGBHYIEkqoBrkrRga7AT0QUQN6S/exec";
 
-// Detectar en qué página estamos para ejecutar una lógica u otra
 document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("lista-encuestas")) {
-        // Estamos en la página de inicio (index.html)
         cargarEncuestas();
     }
     if (document.getElementById("form-crear")) {
-        // Estamos en la página de creación (crear.html)
         configurarFormularioCrear();
     }
 });
-
-// ==========================================
-// LÓGICA DE LA PÁGINA PRINCIPAL (INDEX.HTML)
-// ==========================================
 
 async function cargarEncuestas() {
     const listaContenedor = document.getElementById("lista-encuestas");
     const loadingDiv = document.getElementById("loading");
 
     try {
-        // Hacemos la petición GET a nuestra API de Google
         const respuesta = await fetch(API_URL);
         const datos = await respuesta.json();
 
@@ -30,47 +21,72 @@ async function cargarEncuestas() {
         listaContenedor.classList.remove("hidden");
 
         if (datos.encuestas.length === 0) {
-            listaContenedor.innerHTML = `<p class="text-center text-gray-500 py-4">No hay encuestas creadas todavía. ¡Sé la primera en crear una!</p>`;
+            listaContenedor.innerHTML = `<p class="text-center text-gray-500 py-4">No hay encuestas creadas todavía.</p>`;
             return;
         }
 
-        // Procesar cada encuesta
+        listaContenedor.innerHTML = ""; 
+
         datos.encuestas.forEach(encuesta => {
-            // Contamos los votos de esta encuesta concreta
+            const estaActiva = encuesta.activa !== "NO";
             const votosEncuesta = datos.respuestas.filter(r => r.idEncuesta === encuesta.id);
             
-            // Creamos la tarjeta de la encuesta en HTML
             const tarjeta = document.createElement("div");
-            tarjeta.className = "bg-white p-6 rounded-xl shadow-md border border-gray-100";
+            tarjeta.className = `bg-white p-6 rounded-xl shadow-md border ${estaActiva ? 'border-gray-100' : 'border-gray-300 bg-gray-50 opacity-90'}`;
             
             let opcionesHTML = "";
             encuesta.opciones.forEach(opcion => {
                 const nombreOpcion = opcion.trim();
-                // Contamos cuántos votos tiene esta opción específica
-                const numVotos = votosEncuesta.filter(v => v.respuesta === nombreOpcion).length;
+                const votosDeEstaOpcion = votosEncuesta.filter(v => v.respuesta === nombreOpcion);
+                const nombresVotantes = votosDeEstaOpcion.map(v => v.nombre).join(", ");
 
                 opcionesHTML += `
-                    <div class="flex items-center justify-between my-2 p-2 rounded-lg bg-gray-50 hover:bg-indigo-50 transition">
-                        <button onclick="votar('${encuesta.id}', '${nombreOpcion}')" 
-                                class="text-left font-medium text-gray-700 hover:text-indigo-600 flex-1 cursor-pointer">
-                            🙋‍♂️ ${nombreOpcion}
-                        </button>
-                        <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                            ${numVotos} ${numVotos === 1 ? 'voto' : 'votos'}
-                        </span>
+                    <div class="my-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                        <div class="flex items-center justify-between mb-1">
+                            ${estaActiva ? `
+                                <button onclick="votar('${encuesta.id}', '${nombreOpcion}')" 
+                                        class="text-left font-semibold text-indigo-700 hover:text-indigo-900 cursor-pointer flex-1">
+                                    🙋‍♂️ ${nombreOpcion}
+                                </button>
+                            ` : `
+                                <span class="font-semibold text-gray-500">🚫 ${nombreOpcion}</span>
+                            `}
+                            <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                                ${votosDeEstaOpcion.length}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 italic mt-1 pl-6">
+                            ${nombresVotantes ? `Votan: ${nombresVotantes}` : 'Nadie ha votado esto aún'}
+                        </p>
                     </div>
                 `;
             });
 
             tarjeta.innerHTML = `
-                <h3 class="text-xl font-bold text-indigo-950 mb-1">${encuesta.titulo}</h3>
-                <p class="text-gray-600 mb-4 italic">"${encuesta.pregunta}"</p>
-                <div class="space-y-1">${opcionesHTML}</div>
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h3 class="text-xl font-bold text-indigo-950">${encuesta.titulo}</h3>
+                        <p class="text-gray-600 italic text-sm">"${encuesta.pregunta}"</p>
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded font-bold ${estaActiva ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                        ${estaActiva ? 'Abierta' : 'Cerrada'}
+                    </span>
+                </div>
                 
-                <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                <div class="space-y-1 mt-4">${opcionesHTML}</div>
+                
+                <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                    <!-- Botón para cerrar horizontal: cualquiera puede darle -->
+                    ${estaActiva ? `
+                        <button onclick="desactivarEncuesta('${encuesta.id}')" 
+                                class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">
+                            🔒 Cerrar votación
+                        </button>
+                    ` : '<span class="text-xs text-gray-400 italic">Votación finalizada</span>'}
+
                     <button onclick="mostrarGrafica('${encuesta.id}', ${JSON.stringify(encuesta.opciones)}, ${JSON.stringify(votosEncuesta)})" 
                             class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer">
-                        📊 Ver Gráfico Estadístico
+                        📊 Ver Gráfico
                     </button>
                 </div>
                 <canvas id="chart-${encuesta.id}" class="mt-4 hidden max-h-48"></canvas>
@@ -85,48 +101,62 @@ async function cargarEncuestas() {
     }
 }
 
-// Función para enviar un voto
 async function votar(idEncuesta, respuestaElegida) {
-    if (!confirm(`¿Quieres registrar tu voto para "${respuestaElegida}"?`)) return;
+    const nombreUsuario = prompt("Por favor, introduce tu nombre para registrar el voto:");
+    if (!nombreUsuario || nombreUsuario.trim() === "") {
+        alert("El nombre es obligatorio para saber quién viene.");
+        return;
+    }
 
     try {
-        const respuesta = await fetch(API_URL, {
+        await fetch(API_URL, {
             method: "POST",
-            mode: "no-cors", // Evita problemas de CORS con Google Apps Script
+            mode: "no-cors",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 accion: "votar",
                 idEncuesta: idEncuesta,
-                respuestaElegida: respuestaElegida
+                respuestaElegida: respuestaElegida,
+                nombre: nombreUsuario.trim()
             })
         });
 
-        alert("¡Voto enviado con éxito! La página se recargará para actualizar los resultados.");
+        alert("¡Voto registrado! La página se actualizará.");
         location.reload();
     } catch (error) {
         alert("Hubo un error al enviar tu voto.");
-        console.error(error);
     }
 }
 
-// Función para pintar la gráfica con Chart.js
-function mostrarGrafica(idEncuesta, opciones, votos) {
-    const canvas = document.getElementById(`chart-${idEncuesta}`);
-    
-    // Si ya está visible, lo ocultamos (toggle)
-    if (!canvas.classList.contains("hidden")) {
-        canvas.classList.add("hidden");
+// Cierre directo sin pedir contraseñas
+async function desactivarEncuesta(idEncuesta) {
+    if (!confirm("¿Quieres dar por terminada esta votación? Nadie más podrá votar.")) {
         return;
     }
-    
+
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                accion: "desactivar",
+                idEncuesta: idEncuesta
+            })
+        });
+
+        alert("Encuesta cerrada con éxito.");
+        location.reload();
+    } catch (error) {
+        alert("Error al cerrar la encuesta.");
+    }
+}
+
+function mostrarGrafica(idEncuesta, opciones, votos) {
+    const canvas = document.getElementById(`chart-${idEncuesta}`);
+    if (!canvas.classList.contains("hidden")) { canvas.classList.add("hidden"); return; }
     canvas.classList.remove("hidden");
-
-    // Preparar los datos contados para la gráfica
-    const dataConteo = opciones.map(opcion => {
-        return votos.filter(v => v.respuesta === opcion.trim()).length;
-    });
-
-    // Crear el gráfico de barras horizontales
+    const dataConteo = opciones.map(opcion => votos.filter(v => v.respuesta === opcion.trim()).length);
     new Chart(canvas, {
         type: 'bar',
         data: {
@@ -140,66 +170,38 @@ function mostrarGrafica(idEncuesta, opciones, votos) {
                 borderRadius: 5
             }]
         },
-        options: {
-            indexAxis: 'y', // Hace que las barras sean horizontales
-            scales: {
-                x: { beginAtZero: true, ticks: { stepSize: 1 } }
-            },
-            plugins: { legend: { display: false } }
-        }
+        options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
     });
 }
 
-
-// =============================================
-// LÓGICA DE LA PÁGINA DE CREACIÓN (CREAR.HTML)
-// =============================================
-
 function configurarFormularioCrear() {
     const formulario = document.getElementById("form-crear");
+    if(!formulario) return;
     const btnEnviar = document.getElementById("btn-enviar");
     const msgExito = document.getElementById("mensaje-exito");
 
     formulario.addEventListener("submit", async (e) => {
         e.preventDefault();
-
         btnEnviar.disabled = true;
         btnEnviar.innerText = "Publicando...";
-
-        // Procesamos las opciones separadas por comas en un array limpio
-        const opcionesArray = document.getElementById("opciones").value
-            .split(",")
-            .map(opt => opt.trim())
-            .filter(opt => opt !== ""); // Quita espacios vacíos
-
-        const datosNuevaEncuesta = {
-            accion: "crear",
-            titulo: document.getElementById("titulo").value,
-            pregunta: document.getElementById("pregunta").value,
-            opciones: opcionesArray
-        };
-
+        const opcionesArray = document.getElementById("opciones").value.split(",").map(opt => opt.trim()).filter(opt => opt !== "");
         try {
             await fetch(API_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosNuevaEncuesta)
+                body: JSON.stringify({
+                    accion: "crear",
+                    titulo: document.getElementById("titulo").value,
+                    pregunta: document.getElementById("pregunta").value,
+                    opciones: opcionesArray
+                })
             });
-
-            // Como usamos 'no-cors' no podemos leer la respuesta JSON directamente,
-            // pero si no salta al catch es que se ha enviado correctamente.
             msgExito.classList.remove("hidden");
             formulario.reset();
-
-            // Redirigir al inicio tras 2 segundos
-            setTimeout(() => {
-                window.location.href = "index.html";
-            }, 2000);
-
+            setTimeout(() => { window.location.href = "index.html"; }, 2000);
         } catch (error) {
             alert("Error al crear la encuesta.");
-            console.error(error);
             btnEnviar.disabled = false;
             btnEnviar.innerText = "Publicar Encuesta";
         }
