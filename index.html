@@ -34,14 +34,31 @@
         <!-- Aquí JavaScript inyectará las encuestas dinámicamente -->
         <div id="lista-encuestas" class="space-y-6 hidden"></div>
  <!-- Sección del Calendario de la Batucada -->
-        <section class="container mx-auto p-4 max-w-3xl mt-10 mb-10">
-            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-                <h2 class="text-2xl font-bold mb-4 text-center text-indigo-900">📅 Ensayos y Eventos</h2>
+       <!-- Sección del Calendario de la Batucada -->
+        <section class="container mx-auto p-4 max-w-3xl mt-6 mb-10">
+            <div class="bg-white p-4 md:p-6 rounded-xl shadow-md border border-gray-100">
+                <h2 class="text-xl md:text-2xl font-bold mb-4 text-center text-indigo-900">📅 Ensayos y Eventos</h2>
                 
-                <!-- Contenedor responsive para el calendario -->
-                <div class="w-full overflow-hidden rounded-lg aspect-video min-h-[400px]">
-                    <!-- PEGA TU IFRAME DE GOOGLE CALENDAR AQUÍ ABAJO, reemplazando este -->
-                    <iframe src="https://calendar.google.com/calendar/embed?height=200&wkst=2&ctz=Europe%2FMadrid&showPrint=0&title=BATUF%C3%9ARIA&src=Y2VjaWxpYWFsYXJjb25kQGhvdG1haWwuY29t&color=%23039be5" style="border:solid 1px #777" width="400" height="200" frameborder="0" scrolling="no"></iframe>
+                <!-- Contenedor para el calendario en vista mensual -->
+                <div class="w-full rounded-lg border border-gray-200 overflow-hidden shadow-inner bg-gray-50">
+                    
+                    <!-- REEMPLAZA TU_URL_PÚBLICA_DE_GOOGLE_CALENDAR_AQUÍ manteniendo el final -->
+                    <!-- fíjate que ahora pone &mode=MONTH&wkst=2&hl=es -->
+                    <iframe src="https://calendar.google.com/calendar/embed?src=8ecc47b67cab1dd5e411e6bd29dd2c8c287011fef7259547463f0970acb8154d%40group.calendar.google.com&ctz=Europe%2FMadrid&mode=MONTH&wkst=2&hl=es" 
+                            style="border: 0" 
+                            class="w-full h-[500px]" 
+                            frameborder="0" 
+                            scrolling="no">
+                    </iframe>
+                    
+                </div>
+                
+                <!-- Botón de apoyo vital para que en el móvil lo puedan abrir en grande si se corta -->
+                <div class="mt-4 text-center">
+                    <a href="https://calendar.google.com/calendar/embed?src=8ecc47b67cab1dd5e411e6bd29dd2c8c287011fef7259547463f0970acb8154d%40group.calendar.google.com&ctz=Europe%2FMadrid&mode=MONTH&wkst=2&hl=es" target="_blank" 
+                    class="inline-block bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold px-4 py-2 rounded-lg transition border border-indigo-100">
+                        🔍 Ver calendario en pantalla completa / Ampliar
+                    </a>
                 </div>
             </div>
         </section>
