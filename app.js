@@ -31,7 +31,10 @@ async function cargarEncuestas() {
 
         listaContenedor.innerHTML = ""; 
 
-        datos.encuestas.forEach(encuesta => {
+        // ORDENACIÓN AUTOMÁTICA: Gira la lista para que las últimas creadas aparezcan arriba del todo
+        const encuestasOrdenadas = [...datos.encuestas].reverse();
+
+        encuestasOrdenadas.forEach(encuesta => {
             const estaActiva = encuesta.activa !== "NO";
             const votosEncuesta = datos.respuestas.filter(r => r.idEncuesta === encuesta.id);
             
@@ -80,7 +83,6 @@ async function cargarEncuestas() {
                 <div class="space-y-1 mt-4">${opcionesHTML}</div>
                 
                 <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                    <!-- Botón para cerrar horizontal: cualquiera puede darle -->
                     ${estaActiva ? `
                         <button onclick="desactivarEncuesta('${encuesta.id}')" 
                                 class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">
@@ -196,7 +198,6 @@ function configurarFormularioCrear() {
                 body: JSON.stringify({
                     accion: "crear",
                     titulo: document.getElementById("titulo").value,
-                    pregunta: document.getElementById("preguntageda"),
                     pregunta: document.getElementById("pregunta").value,
                     opciones: opcionesArray
                 })
@@ -212,8 +213,7 @@ function configurarFormularioCrear() {
     });
 }
 
-// LÓGICA DE PESTAÑAS: Controla el aspecto y contenido de las opciones según el tipo seleccionado
-// LÓGICA DE PESTAÑAS: Modifica las opciones automáticamente con tus instrumentos
+// LÓGICA DE PESTAÑAS: Reemplazo dinámico compatible con Tailwind v4 y tus instrumentos
 function cambiarTipo(tipo) {
     const btnEnsayo = document.getElementById("btn-tipo-ensayo");
     const btnLibre = document.getElementById("btn-tipo-libre");
@@ -223,19 +223,16 @@ function cambiarTipo(tipo) {
     if (!btnEnsayo || !btnLibre || !inputOpciones) return;
 
     if (tipo === 'ensayo') {
-        // Estilos para Activar Ensayo
         btnEnsayo.classList.replace("border-gray-200", "border-indigo-600");
         btnEnsayo.classList.replace("bg-white", "bg-indigo-50");
         btnEnsayo.classList.replace("text-gray-700", "text-indigo-900");
         btnEnsayo.classList.add("font-bold");
 
-        // Estilos para Desactivar Libre
         btnLibre.classList.replace("border-indigo-600", "border-gray-200");
         btnLibre.classList.replace("bg-indigo-50", "bg-white");
         btnLibre.classList.replace("text-indigo-900", "text-gray-700");
         btnLibre.classList.remove("font-bold");
         
-        // Configurar Input de los instrumentos
         inputOpciones.value = "Sí, soy caja, Sí soy repique, Sí soy dobra, Sí soy surdo 1, Sí soy surdo 2, No puedo ❌";
         inputOpciones.readOnly = true;
         inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed";
@@ -244,19 +241,16 @@ function cambiarTipo(tipo) {
             ayudaOpciones.className = "text-xs text-gray-400 mt-1";
         }
     } else {
-        // Estilos para Activar Libre
         btnLibre.classList.replace("border-gray-200", "border-indigo-600");
         btnLibre.classList.replace("bg-white", "bg-indigo-50");
         btnLibre.classList.replace("text-gray-700", "text-indigo-900");
         btnLibre.classList.add("font-bold");
 
-        // Estilos para Desactivar Ensayo
         btnEnsayo.classList.replace("border-indigo-600", "border-gray-200");
         btnEnsayo.classList.replace("bg-indigo-50", "bg-white");
         btnEnsayo.classList.replace("text-indigo-900", "text-gray-700");
         btnEnsayo.classList.remove("font-bold");
         
-        // Configurar Input libre para escribir
         inputOpciones.value = "";
         inputOpciones.placeholder = "Opción 1, Opción 2, Opción 3 (separadas por comas)";
         inputOpciones.readOnly = false;
