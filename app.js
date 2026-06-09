@@ -6,6 +6,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (document.getElementById("form-crear")) {
         configurarFormularioCrear();
+        
+        // Escuchadores para los botones de pestañas en crear.html
+        document.getElementById("btn-tipo-ensayo").addEventListener("click", () => cambiarTipo('ensayo'));
+        document.getElementById("btn-tipo-libre").addEventListener("click", () => cambiarTipo('libre'));
     }
 });
 
@@ -128,7 +132,6 @@ async function votar(idEncuesta, respuestaElegida) {
     }
 }
 
-// Cierre directo sin pedir contraseñas
 async function desactivarEncuesta(idEncuesta) {
     if (!confirm("¿Quieres dar por terminada esta votación? Nadie más podrá votar.")) {
         return;
@@ -193,6 +196,7 @@ function configurarFormularioCrear() {
                 body: JSON.stringify({
                     accion: "crear",
                     titulo: document.getElementById("titulo").value,
+                    pregunta: document.getElementById("preguntageda"),
                     pregunta: document.getElementById("pregunta").value,
                     opciones: opcionesArray
                 })
@@ -206,4 +210,35 @@ function configurarFormularioCrear() {
             btnEnviar.innerText = "Publicar Encuesta";
         }
     });
+}
+
+// LÓGICA DE PESTAÑAS: Controla el aspecto y contenido de las opciones según el tipo seleccionado
+function cambiarTipo(tipo) {
+    const btnEnsayo = document.getElementById("btn-tipo-ensayo");
+    const btnLibre = document.getElementById("btn-tipo-libre");
+    const inputOpciones = document.getElementById("opciones");
+    const ayudaOpciones = document.getElementById("ayuda-opciones");
+
+    if (!btnEnsayo || !btnLibre || !inputOpciones) return;
+
+    if (tipo === 'ensayo') {
+        btnEnsayo.className = "p-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-bold text-center cursor-pointer transition";
+        btnLibre.className = "p-3 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-center cursor-pointer transition hover:border-gray-300";
+        
+        inputOpciones.value = "Sí voy 🥁, No puedo ❌, Llego tarde ⏱️";
+        inputOpciones.readOnly = true;
+        inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed";
+        ayudaOpciones.innerText = "Las opciones se han rellenado automáticamente para el ensayo.";
+        ayudaOpciones.className = "text-xs text-gray-400 mt-1";
+    } else {
+        btnEnsayo.className = "p-3 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-center cursor-pointer transition hover:border-gray-300";
+        btnLibre.className = "p-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-bold text-center cursor-pointer transition";
+        
+        inputOpciones.value = "";
+        inputOpciones.placeholder = "Opción 1, Opción 2, Opción 3 (separadas por comas)";
+        inputOpciones.readOnly = false;
+        inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-indigo-500";
+        ayudaOpciones.innerText = "Escribe las opciones que quieras separadas por comas.";
+        ayudaOpciones.className = "text-xs text-indigo-600 font-medium mt-1";
+    }
 }
