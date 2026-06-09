@@ -59,7 +59,7 @@ async function cargarEncuestas() {
                             ${estaActiva ? `
                                 <button onclick="votar('${encuesta.id}', '${nombreOpcion}')" 
                                         class="text-left font-semibold text-indigo-700 hover:text-indigo-900 cursor-pointer flex-1">
-                                    🙋‍♂️ ${nombreOpcion}
+                                    🙋🏽‍♀️ ${nombreOpcion}
                                 </button>
                             ` : `
                                 <span class="font-semibold text-gray-500">🚫 ${nombreOpcion}</span>
