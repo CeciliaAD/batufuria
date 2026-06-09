@@ -8,7 +8,6 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
 
-    <!-- Barra de Navegación -->
     <nav class="bg-indigo-600 text-white p-4 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold tracking-wide">🥁 Nueva Encuesta</h1>
@@ -18,24 +17,21 @@
         </div>
     </nav>
 
-    <!-- Contenedor Formulario -->
     <main class="container mx-auto p-4 max-w-xl mt-6">
         <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
             
             <label class="block text-sm font-bold text-gray-700 mb-2">1. Selecciona el tipo de encuesta:</label>
-            <!-- BOTONES DE TIPO DE ENCUESTA -->
             <div class="grid grid-cols-2 gap-3 mb-6">
-                <button type="button" id="btn-tipo-ensayo" onclick="cambiarTipo('ensayo')"
+                <button type="button" id="btn-tipo-ensayo"
                         class="p-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-bold text-center cursor-pointer transition">
                     📅 Tipo Ensayo<br><span class="text-xs font-normal text-indigo-600">Opciones automáticas</span>
                 </button>
-                <button type="button" id="btn-tipo-libre" onclick="cambiarTipo('libre')"
+                <button type="button" id="btn-tipo-libre"
                         class="p-3 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-center cursor-pointer transition hover:border-gray-300">
                     ✏️ Encuesta Libre<br><span class="text-xs font-normal text-gray-400">Opciones personalizadas</span>
                 </button>
             </div>
 
-            <!-- FORMULARIO -->
             <form id="form-crear" class="space-y-4">
                 
                 <div>
@@ -52,7 +48,6 @@
 
                 <div>
                     <label for="opciones" class="block text-sm font-semibold text-gray-700 mb-1">Opciones de respuesta</label>
-                    <!-- El campo empieza configurado como "ensayo" por defecto -->
                     <input type="text" id="opciones" required readonly
                            value="Sí, soy caja, Sí soy repique, Sí soy dobra, Sí soy surdo 1, Sí soy surdo 2, No puedo ❌" 
                            class="w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed">
