@@ -213,6 +213,7 @@ function configurarFormularioCrear() {
 }
 
 // LÓGICA DE PESTAÑAS: Controla el aspecto y contenido de las opciones según el tipo seleccionado
+// LÓGICA DE PESTAÑAS: Modifica las opciones automáticamente con tus instrumentos
 function cambiarTipo(tipo) {
     const btnEnsayo = document.getElementById("btn-tipo-ensayo");
     const btnLibre = document.getElementById("btn-tipo-libre");
@@ -222,23 +223,47 @@ function cambiarTipo(tipo) {
     if (!btnEnsayo || !btnLibre || !inputOpciones) return;
 
     if (tipo === 'ensayo') {
-        btnEnsayo.className = "p-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-bold text-center cursor-pointer transition";
-        btnLibre.className = "p-3 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-center cursor-pointer transition hover:border-gray-300";
+        // Estilos para Activar Ensayo
+        btnEnsayo.classList.replace("border-gray-200", "border-indigo-600");
+        btnEnsayo.classList.replace("bg-white", "bg-indigo-50");
+        btnEnsayo.classList.replace("text-gray-700", "text-indigo-900");
+        btnEnsayo.classList.add("font-bold");
+
+        // Estilos para Desactivar Libre
+        btnLibre.classList.replace("border-indigo-600", "border-gray-200");
+        btnLibre.classList.replace("bg-indigo-50", "bg-white");
+        btnLibre.classList.replace("text-indigo-900", "text-gray-700");
+        btnLibre.classList.remove("font-bold");
         
-        inputOpciones.value = "Sí voy 🥁, No puedo ❌, Llego tarde ⏱️";
+        // Configurar Input de los instrumentos
+        inputOpciones.value = "Sí, soy caja, Sí soy repique, Sí soy dobra, Sí soy surdo 1, Sí soy surdo 2, No puedo ❌";
         inputOpciones.readOnly = true;
         inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed";
-        ayudaOpciones.innerText = "Las opciones se han rellenado automáticamente para el ensayo.";
-        ayudaOpciones.className = "text-xs text-gray-400 mt-1";
+        if(ayudaOpciones) {
+            ayudaOpciones.innerText = "Las opciones se han rellenado automáticamente para el ensayo.";
+            ayudaOpciones.className = "text-xs text-gray-400 mt-1";
+        }
     } else {
-        btnEnsayo.className = "p-3 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-center cursor-pointer transition hover:border-gray-300";
-        btnLibre.className = "p-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-bold text-center cursor-pointer transition";
+        // Estilos para Activar Libre
+        btnLibre.classList.replace("border-gray-200", "border-indigo-600");
+        btnLibre.classList.replace("bg-white", "bg-indigo-50");
+        btnLibre.classList.replace("text-gray-700", "text-indigo-900");
+        btnLibre.classList.add("font-bold");
+
+        // Estilos para Desactivar Ensayo
+        btnEnsayo.classList.replace("border-indigo-600", "border-gray-200");
+        btnEnsayo.classList.replace("bg-indigo-50", "bg-white");
+        btnEnsayo.classList.replace("text-indigo-900", "text-gray-700");
+        btnEnsayo.classList.remove("font-bold");
         
+        // Configurar Input libre para escribir
         inputOpciones.value = "";
         inputOpciones.placeholder = "Opción 1, Opción 2, Opción 3 (separadas por comas)";
         inputOpciones.readOnly = false;
         inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-indigo-500";
-        ayudaOpciones.innerText = "Escribe las opciones que quieras separadas por comas.";
-        ayudaOpciones.className = "text-xs text-indigo-600 font-medium mt-1";
+        if(ayudaOpciones) {
+            ayudaOpciones.innerText = "Escribe las opciones que quieras separadas por comas.";
+            ayudaOpciones.className = "text-xs text-indigo-600 font-medium mt-1";
+        }
     }
 }
