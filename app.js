@@ -1,5 +1,8 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxoHs5DOsiny-80Jynradx68gQzhBqTTXUZKsEBeaGBHYIEkqoBrkrRga7AT0QUQN6S/exec";
 
+// Variable global para guardar los datos de las encuestas de forma segura
+let datosEncuestasGlobal = null;
+
 document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("lista-encuestas")) {
         cargarEncuestas();
@@ -20,6 +23,9 @@ async function cargarEncuestas() {
     try {
         const respuesta = await fetch(API_URL);
         const datos = await respuesta.json();
+        
+        // Guardamos los datos globalmente para acceder a ellos sin romper el HTML
+        datosEncuestasGlobal = datos;
 
         loadingDiv.classList.add("hidden");
         listaContenedor.classList.remove("hidden");
@@ -83,6 +89,7 @@ async function cargarEncuestas() {
                 <div class="space-y-1 mt-4">${opcionesHTML}</div>
                 
                 <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                    <!-- Botón para cerrar horizontal -->
                     ${estaActiva ? `
                         <button onclick="desactivarEncuesta('${encuesta.id}')" 
                                 class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">
@@ -90,7 +97,8 @@ async function cargarEncuestas() {
                         </button>
                     ` : '<span class="text-xs text-gray-400 italic">Votación finalizada</span>'}
 
-                    <button onclick="mostrarGrafica('${encuesta.id}', ${JSON.stringify(encuesta.opciones)}, ${JSON.stringify(votosEncuesta)})" 
+                    <!-- CAMBIO AQUÍ: Ahora pasamos el ID de forma segura mediante un atributo propio -->
+                    <button data-id="${encuesta.id}" onclick="prepararGrafica(this)" 
                             class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer">
                         📊 Ver Gráfico
                     </button>
@@ -105,6 +113,60 @@ async function cargarEncuestas() {
         console.error("Error al cargar datos:", error);
         loadingDiv.innerHTML = "❌ Error al conectar con la base de datos de la batucada.";
     }
+}
+
+// Nueva función puente para leer los datos sin que el HTML se rompa
+function prepararGrafica(boton) {
+    const idEncuesta = boton.getAttribute("data-id");
+    if (!idEncuesta || !datosEncuestasGlobal) return;
+
+    // Buscamos la encuesta y sus votos en nuestro almacén seguro de datos
+    const encuesta = datosEncuestasGlobal.encuestas.find(e => e.id === idEncuesta);
+    const votosEncuesta = datosEncuestasGlobal.respuestas.filter(r => r.idEncuesta === idEncuesta);
+
+    if (encuesta) {
+        mostrarGrafica(idEncuesta, encuesta.opciones, votosEncuesta);
+    }
+}
+
+function mostrarGrafica(idEncuesta, opciones, votos) {
+    const canvas = document.getElementById(`chart-${idEncuesta}`);
+    if (!canvas) return;
+    
+    if (!canvas.classList.contains("hidden")) { 
+        canvas.classList.add("hidden"); 
+        return; 
+    }
+    
+    canvas.classList.remove("hidden");
+    const dataConteo = opciones.map(opcion => votos.filter(v => v.respuesta === opcion.trim()).length);
+    
+    new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: opciones,
+            datasets: [{
+                label: 'Votos',
+                data: dataConteo,
+                backgroundColor: 'rgba(79, 70, 229, 0.6)',
+                borderColor: 'rgba(79, 70, 229, 1)',
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        },
+        options: { 
+            indexAxis: 'y', 
+            scales: { 
+                x: { 
+                    beginAtZero: true, 
+                    ticks: { stepSize: 1 } 
+                } 
+            }, 
+            plugins: { 
+                legend: { display: false } 
+            } 
+        }
+    });
 }
 
 async function votar(idEncuesta, respuestaElegida) {
@@ -157,28 +219,6 @@ async function desactivarEncuesta(idEncuesta) {
     }
 }
 
-function mostrarGrafica(idEncuesta, opciones, votos) {
-    const canvas = document.getElementById(`chart-${idEncuesta}`);
-    if (!canvas.classList.contains("hidden")) { canvas.classList.add("hidden"); return; }
-    canvas.classList.remove("hidden");
-    const dataConteo = opciones.map(opcion => votos.filter(v => v.respuesta === opcion.trim()).length);
-    new Chart(canvas, {
-        type: 'bar',
-        data: {
-            labels: opciones,
-            datasets: [{
-                label: 'Votos',
-                data: dataConteo,
-                backgroundColor: 'rgba(79, 70, 229, 0.6)',
-                borderColor: 'rgba(79, 70, 229, 1)',
-                borderWidth: 1,
-                borderRadius: 5
-            }]
-        },
-        options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
-    });
-}
-
 function configurarFormularioCrear() {
     const formulario = document.getElementById("form-crear");
     if(!formulario) return;
@@ -213,7 +253,6 @@ function configurarFormularioCrear() {
     });
 }
 
-// LÓGICA DE PESTAÑAS: Reemplazo dinámico compatible con Tailwind v4 y tus instrumentos
 function cambiarTipo(tipo) {
     const btnEnsayo = document.getElementById("btn-tipo-ensayo");
     const btnLibre = document.getElementById("btn-tipo-libre");
