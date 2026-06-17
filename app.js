@@ -34,11 +34,14 @@ async function cargarEncuestas() {
             return;
         }
 
+        // ORDENACIÓN AUTOMÁTICA: Gira la lista para que las últimas creadas aparezcan arriba del todo
         listaContenedor.innerHTML = ""; 
 
-        // SEPARAR Y ORDENAR: Activas arriba y cerradas abajo
+        // SEPARAR Y ORDENAR: Ponemos las activas arriba y las cerradas abajo (manteniendo las más nuevas primero dentro de cada grupo)
         const encuestasActivas = datos.encuestas.filter(e => e.activa !== "NO").reverse();
         const encuestasCerradas = datos.encuestas.filter(e => e.activa === "NO").reverse();
+        
+        // Las unimos en una sola lista poniendo el grupo de las activas primero
         const encuestasOrdenadas = [...encuestasActivas, ...encuestasCerradas];
 
         encuestasOrdenadas.forEach(encuesta => {
