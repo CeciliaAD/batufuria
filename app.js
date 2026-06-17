@@ -34,7 +34,6 @@ async function cargarEncuestas() {
             return;
         }
 
-        // ORDENACIÓN AUTOMÁTICA: Gira la lista para que las últimas creadas aparezcan arriba del todo
         listaContenedor.innerHTML = ""; 
 
         // SEPARAR Y ORDENAR: Ponemos las activas arriba y las cerradas abajo (manteniendo las más nuevas primero dentro de cada grupo)
@@ -169,7 +168,7 @@ async function borrarEncuesta(idEncuesta) {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ accion: "borrar", idEncuesta: idEncuesta });
+            body: JSON.stringify({ accion: "borrar", idEncuesta: idEncuesta })
         });
         alert("Encuesta eliminada correctamente.");
         location.reload();
