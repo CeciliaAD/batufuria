@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxoHs5DOsiny-80Jynradx68gQzhBqTTXUZKsEBeaGBHYIEkqoBrkrRga7AT0QUQN6S/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbznOdxZnYFher36G48QHr4LvW3qAGXsMm2bMNxXP-Jc00k2FzOukTt-E1GWFijynL7U/exec";
 
 // Variable global para guardar los datos de las encuestas de forma segura
 let datosEncuestasGlobal = null;
@@ -24,7 +24,6 @@ async function cargarEncuestas() {
         const respuesta = await fetch(API_URL);
         const datos = await respuesta.json();
         
-        // Guardamos los datos globalmente para acceder a ellos sin romper el HTML
         datosEncuestasGlobal = datos;
 
         loadingDiv.classList.add("hidden");
@@ -37,8 +36,10 @@ async function cargarEncuestas() {
 
         listaContenedor.innerHTML = ""; 
 
-        // ORDENACIÓN AUTOMÁTICA: Gira la lista para que las últimas creadas aparezcan arriba del todo
-        const encuestasOrdenadas = [...datos.encuestas].reverse();
+        // SEPARAR Y ORDENAR: Activas arriba y cerradas abajo
+        const encuestasActivas = datos.encuestas.filter(e => e.activa !== "NO").reverse();
+        const encuestasCerradas = datos.encuestas.filter(e => e.activa === "NO").reverse();
+        const encuestasOrdenadas = [...encuestasActivas, ...encuestasCerradas];
 
         encuestasOrdenadas.forEach(encuesta => {
             const estaActiva = encuesta.activa !== "NO";
@@ -59,7 +60,7 @@ async function cargarEncuestas() {
                             ${estaActiva ? `
                                 <button onclick="votar('${encuesta.id}', '${nombreOpcion}')" 
                                         class="text-left font-semibold text-indigo-700 hover:text-indigo-900 cursor-pointer flex-1">
-                                    🙋‍♂️ ${nombreOpcion}
+                                    🥁 ${nombreOpcion}
                                 </button>
                             ` : `
                                 <span class="font-semibold text-gray-500">🚫 ${nombreOpcion}</span>
@@ -88,16 +89,25 @@ async function cargarEncuestas() {
                 
                 <div class="space-y-1 mt-4">${opcionesHTML}</div>
                 
-                <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                    <!-- Botón para cerrar horizontal -->
-                    ${estaActiva ? `
-                        <button onclick="desactivarEncuesta('${encuesta.id}')" 
-                                class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">
-                            🔒 Cerrar votación
-                        </button>
-                    ` : '<span class="text-xs text-gray-400 italic">Votación finalizada</span>'}
+                <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap justify-between items-center gap-2">
+                    <div class="flex gap-3">
+                        ${estaActiva ? `
+                            <button onclick="desactivarEncuesta('${encuesta.id}')" 
+                                    class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">
+                                🔒 Cerrar
+                            </button>
+                            <button onclick="cambiarVoto('${encuesta.id}')" 
+                                    class="text-xs text-amber-600 hover:text-amber-800 font-medium cursor-pointer">
+                                🔄 Cambiar mi voto
+                            </button>
+                        ` : `
+                            <button onclick="borrarEncuesta('${encuesta.id}')" 
+                                    class="text-xs text-red-600 hover:text-red-800 font-bold cursor-pointer">
+                                🗑️ Borrar definitiva
+                            </button>
+                        `}
+                    </div>
 
-                    <!-- CAMBIO AQUÍ: Ahora pasamos el ID de forma segura mediante un atributo propio -->
                     <button data-id="${encuesta.id}" onclick="prepararGrafica(this)" 
                             class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer">
                         📊 Ver Gráfico
@@ -115,108 +125,105 @@ async function cargarEncuestas() {
     }
 }
 
-// Nueva función puente para leer los datos sin que el HTML se rompa
+// NUEVA FUNCIÓN: Elimina el voto anterior de una compañera para dejarla volver a votar
+async function cambiarVoto(idEncuesta) {
+    const nombreUsuario = prompt("Introduce TU NOMBRE EXACTO para eliminar tu voto anterior de esta encuesta:");
+    if (!nombreUsuario || nombreUsuario.trim() === "") {
+        alert("El nombre es necesario para localizar tu voto.");
+        return;
+    }
+
+    if (!confirm(`¿Quieres borrar el voto de "${nombreUsuario.trim()}" en esta encuesta para seleccionar otro instrumento?`)) {
+        return;
+    }
+
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                accion: "cambiarVoto",
+                idEncuesta: idEncuesta,
+                nombre: nombreUsuario.trim()
+            })
+        });
+
+        alert("Tu voto anterior se ha borrado. Ya puedes pulsar de nuevo sobre tu opción correcta.");
+        location.reload();
+    } catch (error) {
+        alert("Error al intentar cambiar el voto.");
+    }
+}
+
+async function borrarEncuesta(idEncuesta) {
+    if (!confirm("⚠️ ¿Estás segura? Esto eliminará la encuesta y TODOS sus votos del Excel para siempre.")) {
+        return;
+    }
+
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accion: "borrar", idEncuesta: idEncuesta });
+        });
+        alert("Encuesta eliminada correctamente.");
+        location.reload();
+    } catch (error) { alert("Error al intentar borrar la encuesta."); }
+}
+
 function prepararGrafica(boton) {
     const idEncuesta = boton.getAttribute("data-id");
     if (!idEncuesta || !datosEncuestasGlobal) return;
-
-    // Buscamos la encuesta y sus votos en nuestro almacén seguro de datos
     const encuesta = datosEncuestasGlobal.encuestas.find(e => e.id === idEncuesta);
     const votosEncuesta = datosEncuestasGlobal.respuestas.filter(r => r.idEncuesta === idEncuesta);
-
-    if (encuesta) {
-        mostrarGrafica(idEncuesta, encuesta.opciones, votosEncuesta);
-    }
+    if (encuesta) { mostrarGrafica(idEncuesta, encuesta.opciones, votosEncuesta); }
 }
 
 function mostrarGrafica(idEncuesta, opciones, votos) {
     const canvas = document.getElementById(`chart-${idEncuesta}`);
     if (!canvas) return;
-    
-    if (!canvas.classList.contains("hidden")) { 
-        canvas.classList.add("hidden"); 
-        return; 
-    }
-    
+    if (!canvas.classList.contains("hidden")) { canvas.classList.add("hidden"); return; }
     canvas.classList.remove("hidden");
     const dataConteo = opciones.map(opcion => votos.filter(v => v.respuesta === opcion.trim()).length);
-    
     new Chart(canvas, {
         type: 'bar',
         data: {
             labels: opciones,
-            datasets: [{
-                label: 'Votos',
-                data: dataConteo,
-                backgroundColor: 'rgba(79, 70, 229, 0.6)',
-                borderColor: 'rgba(79, 70, 229, 1)',
-                borderWidth: 1,
-                borderRadius: 5
-            }]
+            datasets: [{ label: 'Votos', data: dataConteo, backgroundColor: 'rgba(79, 70, 229, 0.6)', borderColor: 'rgba(79, 70, 229, 1)', borderWidth: 1, borderRadius: 5 }]
         },
-        options: { 
-            indexAxis: 'y', 
-            scales: { 
-                x: { 
-                    beginAtZero: true, 
-                    ticks: { stepSize: 1 } 
-                } 
-            }, 
-            plugins: { 
-                legend: { display: false } 
-            } 
-        }
+        options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
     });
 }
 
 async function votar(idEncuesta, respuestaElegida) {
     const nombreUsuario = prompt("Por favor, introduce tu nombre para registrar el voto:");
-    if (!nombreUsuario || nombreUsuario.trim() === "") {
-        alert("El nombre es obligatorio para saber quién viene.");
-        return;
-    }
-
+    if (!nombreUsuario || nombreUsuario.trim() === "") { alert("El nombre es obligatorio."); return; }
     try {
         await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                accion: "votar",
-                idEncuesta: idEncuesta,
-                respuestaElegida: respuestaElegida,
-                nombre: nombreUsuario.trim()
-            })
+            body: JSON.stringify({ accion: "votar", idEncuesta: idEncuesta, respuestaElegida: respuestaElegida, nombre: nombreUsuario.trim() })
         });
-
-        alert("¡Voto registrado! La página se actualizará.");
+        alert("¡Voto registrado!");
         location.reload();
-    } catch (error) {
-        alert("Hubo un error al enviar tu voto.");
-    }
+    } catch (error) { alert("Hubo un error al enviar tu voto."); }
 }
 
 async function desactivarEncuesta(idEncuesta) {
-    if (!confirm("¿Quieres dar por terminada esta votación? Nadie más podrá votar.")) {
-        return;
-    }
-
+    if (!confirm("¿Quieres dar por terminada esta votación? Nadie más podrá votar.")) { return; }
     try {
         await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                accion: "desactivar",
-                idEncuesta: idEncuesta
-            })
+            body: JSON.stringify({ accion: "desactivar", idEncuesta: idEncuesta })
         });
-
         alert("Encuesta cerrada con éxito.");
         location.reload();
-    } catch (error) {
-        alert("Error al cerrar la encuesta.");
-    }
+    } catch (error) { alert("Error al cerrar la encuesta."); }
 }
 
 function configurarFormularioCrear() {
@@ -235,12 +242,7 @@ function configurarFormularioCrear() {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    accion: "crear",
-                    titulo: document.getElementById("titulo").value,
-                    pregunta: document.getElementById("pregunta").value,
-                    opciones: opcionesArray
-                })
+                body: JSON.stringify({ accion: "crear", titulo: document.getElementById("titulo").value, pregunta: document.getElementById("pregunta").value, opciones: opcionesArray })
             });
             msgExito.classList.remove("hidden");
             formulario.reset();
@@ -258,45 +260,16 @@ function cambiarTipo(tipo) {
     const btnLibre = document.getElementById("btn-tipo-libre");
     const inputOpciones = document.getElementById("opciones");
     const ayudaOpciones = document.getElementById("ayuda-opciones");
-
     if (!btnEnsayo || !btnLibre || !inputOpciones) return;
-
     if (tipo === 'ensayo') {
-        btnEnsayo.classList.replace("border-gray-200", "border-indigo-600");
-        btnEnsayo.classList.replace("bg-white", "bg-indigo-50");
-        btnEnsayo.classList.replace("text-gray-700", "text-indigo-900");
-        btnEnsayo.classList.add("font-bold");
-
-        btnLibre.classList.replace("border-indigo-600", "border-gray-200");
-        btnLibre.classList.replace("bg-indigo-50", "bg-white");
-        btnLibre.classList.replace("text-indigo-900", "text-gray-700");
-        btnLibre.classList.remove("font-bold");
-        
-        inputOpciones.value = "Sí, soy caja, Sí soy repique, Sí soy dobra, Sí soy surdo 1, Sí soy surdo 2, No puedo ❌";
-        inputOpciones.readOnly = true;
-        inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed";
-        if(ayudaOpciones) {
-            ayudaOpciones.innerText = "Las opciones se han rellenado automáticamente para el ensayo.";
-            ayudaOpciones.className = "text-xs text-gray-400 mt-1";
-        }
+        btnEnsayo.classList.replace("border-gray-200", "border-indigo-600"); btnEnsayo.classList.replace("bg-white", "bg-indigo-50"); btnEnsayo.classList.replace("text-gray-700", "text-indigo-900"); btnEnsayo.classList.add("font-bold");
+        btnLibre.classList.replace("border-indigo-600", "border-gray-200"); btnLibre.classList.replace("bg-indigo-50", "bg-white"); btnLibre.classList.replace("text-indigo-900", "text-gray-700"); btnLibre.classList.remove("font-bold");
+        inputOpciones.value = "Sí soy directora, Sí soy caja, Sí soy repique, Sí soy dobra, Sí soy surdo 1, Sí soy surdo 2, No puedo ❌"; inputOpciones.readOnly = true; inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed";
+        if(ayudaOpciones) { ayudaOpciones.innerText = "Las opciones se han rellenado automáticamente para el ensayo."; ayudaOpciones.className = "text-xs text-gray-400 mt-1"; }
     } else {
-        btnLibre.classList.replace("border-gray-200", "border-indigo-600");
-        btnLibre.classList.replace("bg-white", "bg-indigo-50");
-        btnLibre.classList.replace("text-gray-700", "text-indigo-900");
-        btnLibre.classList.add("font-bold");
-
-        btnEnsayo.classList.replace("border-indigo-600", "border-gray-200");
-        btnEnsayo.classList.replace("bg-indigo-50", "bg-white");
-        btnEnsayo.classList.replace("text-indigo-900", "text-gray-700");
-        btnEnsayo.classList.remove("font-bold");
-        
-        inputOpciones.value = "";
-        inputOpciones.placeholder = "Opción 1, Opción 2, Opción 3 (separadas por comas)";
-        inputOpciones.readOnly = false;
-        inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-indigo-500";
-        if(ayudaOpciones) {
-            ayudaOpciones.innerText = "Escribe las opciones que quieras separadas por comas.";
-            ayudaOpciones.className = "text-xs text-indigo-600 font-medium mt-1";
-        }
+        btnLibre.classList.replace("border-gray-200", "border-indigo-600"); btnLibre.classList.replace("bg-white", "bg-indigo-50"); btnLibre.classList.replace("text-gray-700", "text-indigo-900"); btnLibre.classList.add("font-bold");
+        btnEnsayo.classList.replace("border-indigo-600", "border-gray-200"); btnEnsayo.classList.replace("bg-indigo-50", "bg-white"); btnEnsayo.classList.replace("text-indigo-900", "text-gray-700"); btnEnsayo.classList.remove("font-bold");
+        inputOpciones.value = ""; inputOpciones.placeholder = "Opción 1, Opción 2, Opción 3 (separadas por comas)"; inputOpciones.readOnly = false; inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-indigo-500";
+        if(ayudaOpciones) { ayudaOpciones.innerText = "Escribe las opciones que quieras separadas por comas."; ayudaOpciones.className = "text-xs text-indigo-600 font-medium mt-1"; }
     }
 }
