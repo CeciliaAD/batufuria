@@ -130,7 +130,6 @@ async function cargarEncuestas() {
     }
 }
 
-// NUEVA FUNCIÓN: Crea la estructura visual de la ventanita de forma automática
 function crearModalCambioVoto() {
     if (document.getElementById("modal-cambio-voto")) return;
     
@@ -144,7 +143,7 @@ function crearModalCambioVoto() {
                 
                 <label for="modal-select-nombre" class="block text-xs font-bold text-gray-700 mb-1">¿Quién eres?</label>
                 <select id="modal-select-nombre" class="w-full p-2.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:border-indigo-500 mb-6">
-                    </select>
+                </select>
                 
                 <div class="flex gap-3 justify-end">
                     <button onclick="cerrarModalCambioVoto()" class="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 cursor-pointer">
@@ -160,7 +159,6 @@ function crearModalCambioVoto() {
     document.body.insertAdjacentHTML("beforeend", modalHTML);
 }
 
-// NUEVA FUNCIÓN: Abre la ventana y mete los nombres de las que han votado en ESTA encuesta
 function abrirModalCambioVoto(idEncuesta) {
     if (!datosEncuestasGlobal) return;
     
@@ -169,9 +167,8 @@ function abrirModalCambioVoto(idEncuesta) {
     const modal = document.getElementById("modal-cambio-voto");
     
     idInput.value = idEncuesta;
-    select.innerHTML = ""; // Limpiamos opciones antiguas
+    select.innerHTML = "";
     
-    // Filtramos los votos de esta encuesta específica y sacamos los nombres únicos
     const votos = datosEncuestasGlobal.respuestas.filter(r => r.idEncuesta === idEncuesta);
     const nombresUnicos = [...new Set(votos.map(v => v.nombre.trim()))].sort();
     
@@ -180,7 +177,6 @@ function abrirModalCambioVoto(idEncuesta) {
         return;
     }
     
-    // Rellenamos el desplegable
     nombresUnicos.forEach(nombre => {
         const opt = document.createElement("option");
         opt.value = nombre;
@@ -195,7 +191,6 @@ function cerrarModalCambioVoto() {
     document.getElementById("modal-cambio-voto").classList.add("hidden");
 }
 
-// NUEVA FUNCIÓN: Envía la petición de borrado usando el nombre seleccionado
 async function ejecutarCambioVotoPro() {
     const idEncuesta = document.getElementById("modal-id-encuesta").value;
     const nombreUsuario = document.getElementById("modal-select-nombre").value;
@@ -220,7 +215,8 @@ async function ejecutarCambioVotoPro() {
             })
         });
 
-        alert("Tu voto anterior se ha borrado. Ya puedes pulsar de nuevo sobre tu opción correcta.");
+        // MENSAJE DE CONFIRMACIÓN MODIFICADO CON TU TEXTO GUIADO
+        alert("¡Tu voto anterior se ha borrado correctamente! Procede a pulsar ahora sobre tu nueva opción.");
         location.reload();
     } catch (error) {
         alert("Error al intentar cambiar el voto.");
