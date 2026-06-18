@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbznOdxZnYFher36G48QHr4LvW3qAGXsMm2bMNxXP-Jc00k2FzOukTt-E1GWFijynL7U/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby69c_ZXJW2PkSAlovxwQLh0k8F9rtVtIQvLQjgW_-kP1cHPbrBX9MDhFK3R6Lzfseh/exec";
 
 // Variable global para guardar los datos de las encuestas de forma segura
 let datosEncuestasGlobal = null;
@@ -102,12 +102,17 @@ async function cargarEncuestas() {
                                     class="text-xs text-amber-600 hover:text-amber-800 font-medium cursor-pointer">
                                 🔄 Cambiar mi voto
                             </button>
+                            <!-- NUEVO BOTÓN AÑADIDO AQUÍ -->
+                            <button onclick="editarTituloEncuesta('${encuesta.id}', '${encuesta.titulo.replace(/'/g, "\\'")}')" 
+                                    class="text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer">
+                                ✏️ Editar título
+                            </button>
                         ` : `
                             <button onclick="borrarEncuesta('${encuesta.id}')" 
                                     class="text-xs text-red-600 hover:text-red-800 font-bold cursor-pointer">
                                 🗑️ Borrar definitiva
                             </button>
-                        `}
+                        `} 
                     </div>
 
                     <button data-id="${encuesta.id}" onclick="prepararGrafica(this)" 
@@ -266,12 +271,40 @@ function cambiarTipo(tipo) {
     if (tipo === 'ensayo') {
         btnEnsayo.classList.replace("border-gray-200", "border-indigo-600"); btnEnsayo.classList.replace("bg-white", "bg-indigo-50"); btnEnsayo.classList.replace("text-gray-700", "text-indigo-900"); btnEnsayo.classList.add("font-bold");
         btnLibre.classList.replace("border-indigo-600", "border-gray-200"); btnLibre.classList.replace("bg-indigo-50", "bg-white"); btnLibre.classList.replace("text-indigo-900", "text-gray-700"); btnLibre.classList.remove("font-bold");
-        inputOpciones.value = "Sí soy directora, Sí soy caja, Sí soy repique, Sí soy dobra, Sí soy surdo 1, Sí soy surdo 2, No puedo ❌"; inputOpciones.readOnly = true; inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed";
+        inputOpciones.value = "Sí soy directora, Sí soy caja, Sí soy repique, Sí soy dobra, Sí soy surdo 1, Sí soy surdo 2, No puedo ❌, No sé si puedo ❓"; inputOpciones.readOnly = true; inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed";
         if(ayudaOpciones) { ayudaOpciones.innerText = "Las opciones se han rellenado automáticamente para el ensayo."; ayudaOpciones.className = "text-xs text-gray-400 mt-1"; }
     } else {
         btnLibre.classList.replace("border-gray-200", "border-indigo-600"); btnLibre.classList.replace("bg-white", "bg-indigo-50"); btnLibre.classList.replace("text-gray-700", "text-indigo-900"); btnLibre.classList.add("font-bold");
         btnEnsayo.classList.replace("border-indigo-600", "border-gray-200"); btnEnsayo.classList.replace("bg-indigo-50", "bg-white"); btnEnsayo.classList.replace("text-indigo-900", "text-gray-700"); btnEnsayo.classList.remove("font-bold");
         inputOpciones.value = ""; inputOpciones.placeholder = "Opción 1, Opción 2, Opción 3 (separadas por comas)"; inputOpciones.readOnly = false; inputOpciones.className = "w-full p-3 rounded-lg border border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-indigo-500";
         if(ayudaOpciones) { ayudaOpciones.innerText = "Escribe las opciones que quieras separadas por comas."; ayudaOpciones.className = "text-xs text-indigo-600 font-medium mt-1"; }
+    }
+}
+
+// NUEVA FUNCIÓN: Permite cambiar el título de una encuesta desde la web
+async function editarTituloEncuesta(idEncuesta, tituloActual) {
+    const nuevoTitulo = prompt("Introduce el nuevo título para la encuesta:", tituloActual);
+    
+    // Si cancela o lo deja vacío, no hacemos nada
+    if (nuevoTitulo === null || nuevoTitulo.trim() === "") {
+        return;
+    }
+
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                accion: "editarTitulo",
+                idEncuesta: idEncuesta,
+                titulo: nuevoTitulo.trim()
+            })
+        });
+
+        alert("¡Título modificado con éxito!");
+        location.reload();
+    } catch (error) {
+        alert("Error al intentar cambiar el título.");
     }
 }
