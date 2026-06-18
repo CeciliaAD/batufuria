@@ -6,6 +6,7 @@ let datosEncuestasGlobal = null;
 document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("lista-encuestas")) {
         cargarEncuestas();
+        crearModalCambioVoto(); // Preparamos la ventanita flotante en el fondo
     }
     if (document.getElementById("form-crear")) {
         configurarFormularioCrear();
@@ -36,11 +37,9 @@ async function cargarEncuestas() {
 
         listaContenedor.innerHTML = ""; 
 
-        // SEPARAR Y ORDENAR: Ponemos las activas arriba y las cerradas abajo (manteniendo las más nuevas primero dentro de cada grupo)
+        // SEPARAR Y ORDENAR: Ponemos las activas arriba y las cerradas abajo
         const encuestasActivas = datos.encuestas.filter(e => e.activa !== "NO").reverse();
         const encuestasCerradas = datos.encuestas.filter(e => e.activa === "NO").reverse();
-        
-        // Las unimos en una sola lista poniendo el grupo de las activas primero
         const encuestasOrdenadas = [...encuestasActivas, ...encuestasCerradas];
 
         encuestasOrdenadas.forEach(encuesta => {
@@ -98,7 +97,7 @@ async function cargarEncuestas() {
                                     class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">
                                 🔒 Cerrar
                             </button>
-                            <button onclick="cambiarVoto('${encuesta.id}')" 
+                            <button onclick="abrirModalCambioVoto('${encuesta.id}')" 
                                     class="text-xs text-amber-600 hover:text-amber-800 font-medium cursor-pointer">
                                 🔄 Cambiar mi voto
                             </button>
@@ -131,18 +130,84 @@ async function cargarEncuestas() {
     }
 }
 
-// Elimina el voto anterior de una compañera para dejarla volver a votar
-async function cambiarVoto(idEncuesta) {
-    const nombreUsuario = prompt("Introduce TU NOMBRE EXACTO para eliminar tu voto anterior de esta encuesta:");
-    if (!nombreUsuario || nombreUsuario.trim() === "") {
-        alert("El nombre es necesario para localizar tu voto.");
+// NUEVA FUNCIÓN: Crea la estructura visual de la ventanita de forma automática
+function crearModalCambioVoto() {
+    if (document.getElementById("modal-cambio-voto")) return;
+    
+    const modalHTML = `
+        <div id="modal-cambio-voto" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+            <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-gray-100 transform transition-all">
+                <h3 class="text-lg font-bold text-indigo-950 mb-2 flex items-center gap-2">🔄 Cambiar mi voto</h3>
+                <p class="text-xs text-gray-500 mb-4">Selecciona tu nombre de la lista para eliminar tu respuesta actual y poder elegir otra.</p>
+                
+                <input type="hidden" id="modal-id-encuesta">
+                
+                <label for="modal-select-nombre" class="block text-xs font-bold text-gray-700 mb-1">¿Quién eres?</label>
+                <select id="modal-select-nombre" class="w-full p-2.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:border-indigo-500 mb-6">
+                    </select>
+                
+                <div class="flex gap-3 justify-end">
+                    <button onclick="cerrarModalCambioVoto()" class="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 cursor-pointer">
+                        Cancelar
+                    </button>
+                    <button onclick="ejecutarCambioVotoPro()" class="px-4 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow cursor-pointer transition">
+                        Borrar mi voto
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+}
+
+// NUEVA FUNCIÓN: Abre la ventana y mete los nombres de las que han votado en ESTA encuesta
+function abrirModalCambioVoto(idEncuesta) {
+    if (!datosEncuestasGlobal) return;
+    
+    const select = document.getElementById("modal-select-nombre");
+    const idInput = document.getElementById("modal-id-encuesta");
+    const modal = document.getElementById("modal-cambio-voto");
+    
+    idInput.value = idEncuesta;
+    select.innerHTML = ""; // Limpiamos opciones antiguas
+    
+    // Filtramos los votos de esta encuesta específica y sacamos los nombres únicos
+    const votos = datosEncuestasGlobal.respuestas.filter(r => r.idEncuesta === idEncuesta);
+    const nombresUnicos = [...new Set(votos.map(v => v.nombre.trim()))].sort();
+    
+    if (nombresUnicos.length === 0) {
+        alert("Nadie ha votado en esta encuesta todavía, ¡así que no hay votos que cambiar!");
         return;
     }
+    
+    // Rellenamos el desplegable
+    nombresUnicos.forEach(nombre => {
+        const opt = document.createElement("option");
+        opt.value = nombre;
+        opt.textContent = nombre;
+        select.appendChild(opt);
+    });
+    
+    modal.classList.remove("hidden");
+}
 
-    if (!confirm(`¿Quieres borrar el voto de "${nombreUsuario.trim()}" en esta encuesta para seleccionar otro instrumento?`)) {
+function cerrarModalCambioVoto() {
+    document.getElementById("modal-cambio-voto").classList.add("hidden");
+}
+
+// NUEVA FUNCIÓN: Envía la petición de borrado usando el nombre seleccionado
+async function ejecutarCambioVotoPro() {
+    const idEncuesta = document.getElementById("modal-id-encuesta").value;
+    const nombreUsuario = document.getElementById("modal-select-nombre").value;
+    
+    if (!nombreUsuario) return;
+    
+    if (!confirm(`¿Quieres borrar el voto de "${nombreUsuario}" en esta encuesta para seleccionar otro instrumento?`)) {
         return;
     }
-
+    
+    cerrarModalCambioVoto();
+    
     try {
         await fetch(API_URL, {
             method: "POST",
@@ -151,7 +216,7 @@ async function cambiarVoto(idEncuesta) {
             body: JSON.stringify({
                 accion: "cambiarVoto",
                 idEncuesta: idEncuesta,
-                nombre: nombreUsuario.trim()
+                nombre: nombreUsuario
             })
         });
 
@@ -166,7 +231,6 @@ async function borrarEncuesta(idEncuesta) {
     if (!confirm("⚠️ ¿Estás segura? Esto eliminará la encuesta y TODOS sus votos del Excel para siempre.")) {
         return;
     }
-
     try {
         await fetch(API_URL, {
             method: "POST",
@@ -280,7 +344,6 @@ function cambiarTipo(tipo) {
     }
 }
 
-// FUNCIÓN PARA MODIFICAR EL TÍTULO DE LA ENCUESTA
 async function editarTituloEncuesta(idEncuesta, tituloActual) {
     const nuevoTitulo = prompt("Introduce el nuevo título para la encuesta:", tituloActual);
     if (nuevoTitulo === null || nuevoTitulo.trim() === "") return;
