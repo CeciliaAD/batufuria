@@ -60,10 +60,16 @@ async function cargarEncuestas() {
                     <div class="my-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
                         <div class="flex items-center justify-between mb-1">
                             ${estaActiva ? `
-                                <button onclick="votar('${encuesta.id}', '${nombreOpcion}')" 
-                                        class="text-left font-semibold text-indigo-700 hover:text-indigo-900 cursor-pointer flex-1">
-                                    🥁 ${nombreOpcion}
-                                </button>
+                                <div class="flex items-center gap-2 flex-1">
+                                    <button onclick="votar('${encuesta.id}', '${nombreOpcion}')" 
+                                            class="text-left font-semibold text-indigo-700 hover:text-indigo-900 cursor-pointer">
+                                        🥁 ${nombreOpcion}
+                                    </button>
+                                    <button onclick="alert('Si tienes dudas sobre la opción \\'${nombreOpcion}\\', contacta con la encargada.')" 
+                                            class="text-xs text-gray-400 hover:text-amber-600 cursor-pointer" title="Tengo una duda con esta opción">
+                                        ❓
+                                    </button>
+                                </div>
                             ` : `
                                 <span class="font-semibold text-gray-500">🚫 ${nombreOpcion}</span>
                             `}
@@ -102,7 +108,6 @@ async function cargarEncuestas() {
                                     class="text-xs text-amber-600 hover:text-amber-800 font-medium cursor-pointer">
                                 🔄 Cambiar mi voto
                             </button>
-                            <!-- NUEVO BOTÓN AÑADIDO AQUÍ -->
                             <button onclick="editarTituloEncuesta('${encuesta.id}', '${encuesta.titulo.replace(/'/g, "\\'")}')" 
                                     class="text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer">
                                 ✏️ Editar título
@@ -132,7 +137,7 @@ async function cargarEncuestas() {
     }
 }
 
-// NUEVA FUNCIÓN: Elimina el voto anterior de una compañera para dejarla volver a votar
+// Elimina el voto anterior de una compañera para dejarla volver a votar
 async function cambiarVoto(idEncuesta) {
     const nombreUsuario = prompt("Introduce TU NOMBRE EXACTO para eliminar tu voto anterior de esta encuesta:");
     if (!nombreUsuario || nombreUsuario.trim() === "") {
@@ -281,14 +286,10 @@ function cambiarTipo(tipo) {
     }
 }
 
-// NUEVA FUNCIÓN: Permite cambiar el título de una encuesta desde la web
+// FUNCIÓN PARA RELLENAR O CAMBIAR EL TÍTULO DE LA ENCUESTA
 async function editarTituloEncuesta(idEncuesta, tituloActual) {
     const nuevoTitulo = prompt("Introduce el nuevo título para la encuesta:", tituloActual);
-    
-    // Si cancela o lo deja vacío, no hacemos nada
-    if (nuevoTitulo === null || nuevoTitulo.trim() === "") {
-        return;
-    }
+    if (nuevoTitulo === null || nuevoTitulo.trim() === "") return;
 
     try {
         await fetch(API_URL, {
