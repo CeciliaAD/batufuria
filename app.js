@@ -60,16 +60,10 @@ async function cargarEncuestas() {
                     <div class="my-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
                         <div class="flex items-center justify-between mb-1">
                             ${estaActiva ? `
-                                <div class="flex items-center gap-2 flex-1">
-                                    <button onclick="votar('${encuesta.id}', '${nombreOpcion}')" 
-                                            class="text-left font-semibold text-indigo-700 hover:text-indigo-900 cursor-pointer">
-                                        🥁 ${nombreOpcion}
-                                    </button>
-                                    <button onclick="alert('Si tienes dudas sobre la opción \\'${nombreOpcion}\\', contacta con la encargada.')" 
-                                            class="text-xs text-gray-400 hover:text-amber-600 cursor-pointer" title="Tengo una duda con esta opción">
-                                        ❓
-                                    </button>
-                                </div>
+                                <button onclick="votar('${encuesta.id}', '${nombreOpcion}')" 
+                                        class="text-left font-semibold text-indigo-700 hover:text-indigo-900 cursor-pointer flex-1">
+                                    🥁 ${nombreOpcion}
+                                </button>
                             ` : `
                                 <span class="font-semibold text-gray-500">🚫 ${nombreOpcion}</span>
                             `}
@@ -286,7 +280,7 @@ function cambiarTipo(tipo) {
     }
 }
 
-// FUNCIÓN PARA RELLENAR O CAMBIAR EL TÍTULO DE LA ENCUESTA
+// FUNCIÓN PARA MODIFICAR EL TÍTULO DE LA ENCUESTA
 async function editarTituloEncuesta(idEncuesta, tituloActual) {
     const nuevoTitulo = prompt("Introduce el nuevo título para la encuesta:", tituloActual);
     if (nuevoTitulo === null || nuevoTitulo.trim() === "") return;
